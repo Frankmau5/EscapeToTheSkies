@@ -267,9 +267,102 @@ INSTALLER_HEADER
 cat "$PAYLOAD_TAR" >>"$OUT_FILE"
 chmod 0755 "$OUT_FILE"
 
+ZIP_STAGE="$STAGE_DIR/zip"
+mkdir -p "$ZIP_STAGE"
+cp -p "$OUT_FILE" "$ZIP_STAGE/"
+
+cat >"$ZIP_STAGE/HOW_TO_INSTALL.txt" <<'README_EOF'
+ESCAPE TO THE SKIES — STEAM DECK & LINUX INSTALL GUIDE
+=======================================================
+
+QUICK INSTALL (STEAM DECK DESKTOP MODE / FILE MANAGER)
+------------------------------------------------------
+1. Extract this .zip archive anywhere (Right-click -> Extract archive here).
+2. Double-click "EscapeToTheSkies-SteamDeck-Linux-Installer.sh".
+   - If your file manager opens it in a text editor instead of running it:
+     Right-click the file -> Properties -> Permissions -> check "Is executable",
+     then double-click it again and choose "Execute".
+3. Click Yes when prompted to install.
+
+TERMINAL / KONSOLE INSTALL
+--------------------------
+In the extracted folder, run:
+
+  chmod +x EscapeToTheSkies-SteamDeck-Linux-Installer.sh
+  ./EscapeToTheSkies-SteamDeck-Linux-Installer.sh
+
+For silent / non-interactive installation:
+
+  ./EscapeToTheSkies-SteamDeck-Linux-Installer.sh --yes
+
+Custom install location:
+
+  ./EscapeToTheSkies-SteamDeck-Linux-Installer.sh --dir /path/to/folder
+
+
+WHAT GETS INSTALLED
+-------------------
+- Game files:          ~/.local/share/EscapeToTheSkies/
+- Application Menu:    ~/.local/share/applications/EscapeToTheSkies.desktop
+- Desktop Shortcut:    ~/Desktop/EscapeToTheSkies.desktop
+- 256x256 App Icon:    ~/.local/share/icons/hicolor/256x256/apps/escape-to-the-skies.png
+
+
+ADDING TO STEAM GAMING MODE (STEAM DECK)
+----------------------------------------
+1. In Steam Deck Desktop Mode, open Steam.
+2. Click "Games" -> "Add a Non-Steam Game to My Library..."
+3. Select "Escape to the Skies" from the list (or Browse to
+   ~/.local/share/EscapeToTheSkies/launch.sh).
+4. Return to Gaming Mode to play at native 1280x800 with Deck controls!
+
+
+DESKTOP & STEAM DECK CONTROLS
+-----------------------------
+- Steam Deck / Controller:
+  Move:          Left Stick / D-Pad
+  Jump:          A (Hold longer for Jump Duration lift)
+  Drop Ledge:    Down + A
+  Upgrade Shop:  Y (pauses run timer)
+  How To Play:   X (pauses run timer)
+  Back:          B
+  Pause:         Menu (Start)
+  Restart Run:   View (Back)
+
+- Keyboard:
+  Move:          A / D or Left / Right
+  Jump:          Space / Z / K (W / Up does not jump)
+  Drop Ledge:    S / Down + Jump
+  Upgrade Shop:  Tab / E / I
+  How To Play:   H / F1
+  Pause:         Esc / P
+  Restart Run:   R
+  Fullscreen:    F11 or Alt+Enter
+
+
+UNINSTALLING
+------------
+Run either:
+
+  ~/.local/share/EscapeToTheSkies/uninstall.sh
+
+or:
+
+  ./EscapeToTheSkies-SteamDeck-Linux-Installer.sh --uninstall
+
+(Your personal best times and save data in ~/.config/EscapeToTheSkies are preserved.)
+
+
+REQUIREMENTS NOTE
+-----------------
+Built for SteamOS and 64-bit Linux (x86_64). libSDL3.so.0 is preinstalled on
+SteamOS; desktop Linux distros without SDL3 installed should install their
+distribution's sdl3 package (e.g. sdl3 / libsdl3-0).
+README_EOF
+
 ZIP_FILE="$ROOT_DIR/EscapeToTheSkies-SteamDeck-Linux.zip"
 rm -f "$ZIP_FILE"
-(cd "$ROOT_DIR" && zip -q "$ZIP_FILE" "$(basename "$OUT_FILE")")
+(cd "$ZIP_STAGE" && zip -q "$ZIP_FILE" "EscapeToTheSkies-SteamDeck-Linux-Installer.sh" "HOW_TO_INSTALL.txt")
 
 ls -lh "$OUT_FILE" "$ZIP_FILE"
 echo "Built single-file installer: $OUT_FILE"
