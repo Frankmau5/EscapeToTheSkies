@@ -1,3 +1,5 @@
+![Escape to the Skies Banner](docs/banner.png)
+
 # Escape to the Skies
 
 A Steam Deck-tailored vertical speedrun platformer built with **XNA / FNA** (`.NET 8`, `SDL3`, `FNA3D`, `FAudio`), plus a matching **HTML5 / WebAudio / Gamepad** build for **itch.io**.
