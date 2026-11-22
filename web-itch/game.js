@@ -1617,7 +1617,7 @@
     const csz = measureText(coinLabel, 3);
     drawBox(ctx, px + panelW - csz.w - 66, py + 24, csz.w + 34, 42, "rgba(34,28,16,0.95)", "#f8cc44", 2);
     drawText(ctx, coinLabel, px + panelW - csz.w - 49, py + 34, "#ffe060", 3);
-    drawText(ctx, "Spend coins to boost your climb. Reach higher ledges & speedrun to the sky!", px + 34, py + 72, "#acc2da", 2);
+    drawText(ctx, "Boost your climb. Reach higher ledges & speedrun to the sky!", px + 34, py + 72, "#acc2da", 2);
 
     const env = simulateMaxJump(stats.levels[0], stats.levels[1], stats.levels[2]);
     drawCenteredText(ctx, `CURRENT PEAK: ${(env.maxHeightPx / TILE_SIZE).toFixed(1)} TILES HIGH   |   MAX LEAP: ${(env.maxDistancePx / TILE_SIZE).toFixed(1)} TILES WIDE`,

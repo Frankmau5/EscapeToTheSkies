@@ -2,6 +2,20 @@
 
 A Steam Deck-tailored vertical speedrun platformer built with **XNA / FNA** (`.NET 8`, `SDL3`, `FNA3D`, `FAudio`), plus a matching **HTML5 / WebAudio / Gamepad** build for **itch.io**.
 
+## Screenshots
+
+| Main Menu | Deep Chasm / Ancient Ruins |
+| :---: | :---: |
+| ![Main Menu](docs/screenshots/main-menu.png) | ![The Deep Chasm Ruins](docs/screenshots/deep-chasm.png) |
+
+| Overgrown Forest Layer | Stat Upgrade Shop (Timer Paused) |
+| :---: | :---: |
+| ![Overgrown Forest Layer](docs/screenshots/forest-layer.png) | ![Stat Upgrade Shop](docs/screenshots/upgrade-shop.png) |
+
+| Bright Skies & Escape Gate Summit |
+| :---: |
+| ![The Bright Skies Summit](docs/screenshots/bright-skies.png) |
+
 ## Core Gameplay
 
 - **Climb from the Deep Chasm to the Sky**: Start underground in dark, overgrown ancient stone ruins (deep blues and purples), ascend through the emerald canopy of the overgrown forest layer, and burst into the bright blues of the sunlit sky.

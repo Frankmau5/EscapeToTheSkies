@@ -142,7 +142,7 @@ public sealed class ShopOverlay
 
         font.DrawString(
             sb,
-            "Spend coins to boost your climb. Reach higher ledges & speedrun to the sky!",
+            "Boost your climb. Reach higher ledges & speedrun to the sky!",
             new Vector2(px + 34, py + 72),
             new Color(172, 194, 218),
             scale: 2

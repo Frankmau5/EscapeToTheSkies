@@ -56,12 +56,16 @@ public sealed class EscapeToTheSkiesGame : Game
     private bool _isFullscreen;
 
     private readonly bool _smokeTest;
+    private readonly string? _captureDir;
+    private RenderTarget2D? _captureTarget;
     private int _smokeFrames;
+    private int _captureStep;
     private const float FixedDt = 1f / 60f;
 
-    public EscapeToTheSkiesGame(bool smokeTest = false)
+    public EscapeToTheSkiesGame(bool smokeTest = false, string? captureDir = null)
     {
         _smokeTest = smokeTest;
+        _captureDir = captureDir;
         _graphics = new GraphicsDeviceManager(this);
         _graphics.PreferredBackBufferWidth = UiW;
         _graphics.PreferredBackBufferHeight = UiH;
@@ -93,6 +97,10 @@ public sealed class EscapeToTheSkiesGame : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         _worldTarget = new RenderTarget2D(GraphicsDevice, VirtualWorldW, VirtualWorldH);
         _uiTarget = new RenderTarget2D(GraphicsDevice, UiW, UiH);
+        if (_captureDir != null)
+        {
+            _captureTarget = new RenderTarget2D(GraphicsDevice, UiW, UiH);
+        }
         _textures = new PixelArtTextures(GraphicsDevice);
         _font = new BitmapFont(GraphicsDevice);
         _audio = new AudioSynthesizer();
@@ -100,6 +108,7 @@ public sealed class EscapeToTheSkiesGame : Game
 
     protected override void UnloadContent()
     {
+        _captureTarget?.Dispose();
         _worldTarget.Dispose();
         _uiTarget.Dispose();
         _textures.Dispose();
@@ -145,6 +154,13 @@ public sealed class EscapeToTheSkiesGame : Game
         );
         _input.Update(dt, backRect, UiW, UiH);
         IsMouseVisible = !_smokeTest && _screen != GameScreenState.Playing;
+
+        if (_captureDir != null)
+        {
+            StageCaptureFrame();
+            base.Update(gameTime);
+            return;
+        }
 
         if (_smokeTest)
         {
@@ -601,6 +617,26 @@ public sealed class EscapeToTheSkiesGame : Game
         _spriteBatch.End();
 
         // Pass 3: Present both targets cleanly aspect-fitted to the backbuffer (exact 1:1 on Steam Deck 1280x800!)
+        if (_captureTarget != null && _captureDir != null && _captureStep >= 1 && _captureStep <= 5)
+        {
+            GraphicsDevice.SetRenderTarget(_captureTarget);
+            GraphicsDevice.Clear(Color.Black);
+            _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, null, null);
+            _spriteBatch.Draw(_worldTarget, new Rectangle(0, 0, UiW, UiH), Color.White);
+            _spriteBatch.Draw(_uiTarget, new Rectangle(0, 0, UiW, UiH), Color.White);
+            _spriteBatch.End();
+
+            GraphicsDevice.SetRenderTarget(null);
+            Directory.CreateDirectory(_captureDir);
+            string[] names = { "", "main-menu.png", "deep-chasm.png", "forest-layer.png", "upgrade-shop.png", "bright-skies.png" };
+            using var fs = File.Create(Path.Combine(_captureDir, names[_captureStep]));
+            _captureTarget.SaveAsPng(fs, UiW, UiH);
+            if (_captureStep >= 5)
+            {
+                Exit();
+            }
+        }
+
         GraphicsDevice.SetRenderTarget(null);
         GraphicsDevice.Clear(Color.Black);
 
@@ -615,6 +651,73 @@ public sealed class EscapeToTheSkiesGame : Game
         _spriteBatch.End();
 
         base.Draw(gameTime);
+    }
+
+    private void StageCaptureFrame()
+    {
+        _captureStep++;
+        _elapsedVisual = 1.25f + _captureStep * 0.35f;
+        _particles.Clear();
+        _popups.Clear();
+
+        switch (_captureStep)
+        {
+            case 1: // Main Menu
+                _save.BestTimeSeconds = 42.18;
+                _save.BestCoinsCollected = 96;
+                _screen = GameScreenState.MainMenu;
+                _mainMenuIndex = 0;
+                _player.Spawn(_level.PlayerSpawnPx);
+                _cameraPos = ComputeTargetCamera(_player.Position);
+                break;
+
+            case 2: // Deep Chasm Ruins
+                _screen = GameScreenState.Playing;
+                _stats.Reset();
+                _stats.Coins = 12;
+                _runTimer = 11.42;
+                _player.Spawn(new Vector2(27.5f * LevelData.TileSize, 193f * LevelData.TileSize));
+                _cameraPos = ComputeTargetCamera(_player.Position);
+                break;
+
+            case 3: // Overgrown Forest Layer
+                _screen = GameScreenState.Playing;
+                _stats.Reset();
+                _stats.Coins = 18;
+                _stats.TryUpgrade(StatType.Speed);
+                _stats.TryUpgrade(StatType.JumpHeight);
+                _stats.TryUpgrade(StatType.JumpDuration);
+                _stats.Coins = 18;
+                _runTimer = 28.65;
+                _player.Spawn(new Vector2(27.5f * LevelData.TileSize, 106f * LevelData.TileSize));
+                _player.Velocity = new Vector2(130f, -120f);
+                _cameraPos = ComputeTargetCamera(_player.Position);
+                break;
+
+            case 4: // Upgrade Shop Overlay
+                _screen = GameScreenState.Shop;
+                _shop.ResetSelection();
+                _runTimer = 28.65;
+                _player.Spawn(new Vector2(27.5f * LevelData.TileSize, 109f * LevelData.TileSize));
+                _cameraPos = ComputeTargetCamera(_player.Position);
+                break;
+
+            case 5: // Bright Skies & Summit Gate
+                _screen = GameScreenState.Playing;
+                _stats.Reset();
+                _stats.Coins = 90;
+                for (int i = 0; i < 3; i++)
+                {
+                    _stats.TryUpgrade(StatType.Speed);
+                    _stats.TryUpgrade(StatType.JumpHeight);
+                    _stats.TryUpgrade(StatType.JumpDuration);
+                }
+                _stats.Coins = 14;
+                _runTimer = 41.80;
+                _player.Spawn(new Vector2(23.5f * LevelData.TileSize, 12f * LevelData.TileSize));
+                _cameraPos = ComputeTargetCamera(_player.Position + new Vector2(32f, -20f));
+                break;
+        }
     }
 
     private static Rectangle ComputeLetterboxRect(int backW, int backH)
