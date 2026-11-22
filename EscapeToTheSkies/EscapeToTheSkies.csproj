@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RollForward>Major</RollForward>
+    <RootNamespace>EscapeToTheSkies</RootNamespace>
+    <AssemblyName>EscapeToTheSkies</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FNA\FNA.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\native\linux-x64\libFNA3D.so.0" Condition="Exists('..\native\linux-x64\libFNA3D.so.0')">
+      <Link>libFNA3D.so.0</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\native\linux-x64\libFAudio.so.0" Condition="Exists('..\native\linux-x64\libFAudio.so.0')">
+      <Link>libFAudio.so.0</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\native\linux-x64\libtheorafile.so" Condition="Exists('..\native\linux-x64\libtheorafile.so')">
+      <Link>libtheorafile.so</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

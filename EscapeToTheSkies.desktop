@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Escape to the Skies
+Comment=Climb from the Deep Chasm ruins to the sunlit skies and beat your best time!
+Exec="/home/deck/Documents/escape to the skies/launch.sh"
+Path=/home/deck/Documents/escape to the skies
+Icon=/home/deck/Documents/escape to the skies/assets/icon.png
+Terminal=false
+Categories=Game;ActionGame;
+StartupNotify=true
+StartupWMClass=EscapeToTheSkies

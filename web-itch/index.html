@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Escape to the Skies</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #080a14;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    #wrap {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas#game {
+      width: min(100vw, calc(100vh * 16 / 10));
+      height: min(100vh, calc(100vw * 10 / 16));
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      outline: none;
+      background: #0d0b1c;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+    }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="game" width="1280" height="800" tabindex="0"></canvas>
+  </div>
+  <script src="level-data.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <RestoreEnablePackagePruning>false</RestoreEnablePackagePruning>
+    <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+    <EnableTargetingPackDownload>false</EnableTargetingPackDownload>
+    <DisableTransitiveFrameworkReferenceDownloads>true</DisableTransitiveFrameworkReferenceDownloads>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+</Project>
