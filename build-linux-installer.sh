@@ -265,6 +265,12 @@ __ARCHIVE_BELOW__
 INSTALLER_HEADER
 
 cat "$PAYLOAD_TAR" >>"$OUT_FILE"
-chmod +x "$OUT_FILE"
-ls -lh "$OUT_FILE"
+chmod 0755 "$OUT_FILE"
+
+ZIP_FILE="$ROOT_DIR/EscapeToTheSkies-SteamDeck-Linux.zip"
+rm -f "$ZIP_FILE"
+(cd "$ROOT_DIR" && zip -q "$ZIP_FILE" "$(basename "$OUT_FILE")")
+
+ls -lh "$OUT_FILE" "$ZIP_FILE"
 echo "Built single-file installer: $OUT_FILE"
+echo "Built itch.io zip archive:   $ZIP_FILE"
