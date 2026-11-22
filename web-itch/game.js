@@ -647,7 +647,7 @@
 
   window.addEventListener("keydown", (e) => {
     audio.unlock();
-    if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab", "F1"].includes(e.code)) {
+    if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab", "Backspace"].includes(e.code)) {
       e.preventDefault();
     }
     keysDown.add(e.code);
@@ -728,14 +728,14 @@
 
   let prevSnap = {
     jump: false, shop: false, help: false, pause: false, confirm: false, back: false, restart: false,
-    left: false, right: false, navY: 0, navTimer: 0, mKey: false, f11: false,
+    left: false, right: false, navY: 0, navTimer: 0, mKey: false, bKey: false, f11: false,
   };
   const input = {
     moveX: 0, moveY: 0,
     jumpPressed: false, jumpHeld: false, jumpReleased: false,
     shopToggle: false, helpToggle: false, pausePressed: false,
     confirmPressed: false, backPressed: false, restartPressed: false,
-    mPressed: false, escPressed: false, fullscreenToggle: false,
+    mPressed: false, bPressed: false, fullscreenToggle: false,
     menuMoveY: 0, menuMoveX: 0,
     mouseX: -1, mouseY: -1, mouseMoved: false, mouseClicked: false,
   };
@@ -766,8 +766,8 @@
     if (btn(13)) gy = 1;
     input.moveY = Math.max(-1, Math.min(1, Math.abs(gy) >= Math.abs(ky) ? gy : ky));
 
-    // Jump: A button (0), Space, Z, K (Up / W NEVER jumps!)
-    const currJump = btn(0) || keysDown.has("Space") || keysDown.has("KeyZ") || keysDown.has("KeyK") || touchState.jump || (touchState.drop && false);
+    // Jump: A button (0), Space, J (Up / W NEVER jumps!)
+    const currJump = btn(0) || keysDown.has("Space") || keysDown.has("KeyJ") || touchState.jump;
     input.jumpHeld = currJump;
     input.jumpPressed = currJump && !prevSnap.jump;
     input.jumpReleased = !currJump && prevSnap.jump;
@@ -779,14 +779,15 @@
     }
     prevSnap.dropTouch = touchState.drop;
 
-    const currShop = btn(3) || keysDown.has("Tab") || keysDown.has("KeyE") || keysDown.has("KeyI");
-    const currHelp = btn(2) || keysDown.has("KeyH") || keysDown.has("F1");
-    const currPause = btn(9) || keysDown.has("Escape") || keysDown.has("KeyP");
-    const currConfirm = btn(0) || keysDown.has("Enter") || keysDown.has("Space");
-    const currBack = btn(1) || keysDown.has("Escape") || keysDown.has("Backspace") || keysDown.has("KeyB");
+    // Browser-safe action keys avoiding Tab/Esc iframe conflicts
+    const currShop = btn(3) || keysDown.has("KeyE") || keysDown.has("KeyB");
+    const currHelp = btn(2) || keysDown.has("KeyH");
+    const currPause = btn(9) || keysDown.has("KeyP");
+    const currConfirm = btn(0) || keysDown.has("Enter") || keysDown.has("Space") || keysDown.has("KeyJ");
+    const currBack = btn(1) || keysDown.has("Backspace") || keysDown.has("Escape");
     const currRestart = btn(8) || keysDown.has("KeyR");
     const currM = keysDown.has("KeyM");
-    const currEsc = keysDown.has("Escape");
+    const currB = keysDown.has("KeyB");
     const currF11 = keysDown.has("F11");
 
     input.shopToggle = currShop && !prevSnap.shop;
@@ -796,7 +797,7 @@
     input.backPressed = currBack && !prevSnap.back;
     input.restartPressed = currRestart && !prevSnap.restart;
     input.mPressed = currM && !prevSnap.mKey;
-    input.escPressed = currEsc && !prevSnap.esc;
+    input.bPressed = currB && !prevSnap.bKey;
     input.fullscreenToggle = currF11 && !prevSnap.f11;
 
     const rawY = input.moveY < -0.5 ? -1 : (input.moveY > 0.5 ? 1 : 0);
@@ -829,7 +830,7 @@
     prevSnap.back = currBack;
     prevSnap.restart = currRestart;
     prevSnap.mKey = currM;
-    prevSnap.esc = currEsc;
+    prevSnap.bKey = currB;
     prevSnap.f11 = currF11;
     prevSnap.left = lNow;
     prevSnap.right = rNow;
@@ -1094,6 +1095,14 @@
     return { x: bx + 78 + i * 284, y: by + 382, w: 240, h: 56 };
   }
 
+  // Clickable HUD control bar & top badge hitboxes (shared between update & drawHud)
+  const HUD_TOP_SHOP_RECT = { x: UI_W - 332, y: 18, w: 312, h: 82 };
+  const HUD_TOP_PAUSE_RECT = { x: 274, y: 55, w: 118, h: 28 };
+  const HUD_BTN_SHOP_RECT = { x: 750, y: UI_H - 50, w: 120, h: 30 };
+  const HUD_BTN_HELP_RECT = { x: 878, y: UI_H - 50, w: 102, h: 30 };
+  const HUD_BTN_PAUSE_RECT = { x: 988, y: UI_H - 50, w: 118, h: 30 };
+  const HUD_BTN_RESET_RECT = { x: 1114, y: UI_H - 50, w: 112, h: 30 };
+
   function updateParticlesAndPopups(dt) {
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
@@ -1146,24 +1155,19 @@
         else if (mainMenuIdx === 3) { audio.muted = !audio.muted; audio.playMenuMove(); }
       }
     } else if (screen === "Playing") {
-      // Allow clickable HUD badges (Shop / How To Play / Pause)
-      if (input.mouseClicked && !touchState.enabled) {
-        if (rectContains({ x: UI_W - 332, y: 18, w: 312, h: 82 }, input.mouseX, input.mouseY)) {
+      // Allow clickable HUD badges & bottom control bar buttons (Shop / How To Play / Pause / Reset)
+      if (input.mouseClicked) {
+        if (rectContains(HUD_TOP_SHOP_RECT, input.mouseX, input.mouseY) || rectContains(HUD_BTN_SHOP_RECT, input.mouseX, input.mouseY)) {
           shopIdx = 0; shopFlashTimer = 0; audio.playShopOpen(); screen = "Shop"; return;
         }
-        if (rectContains({ x: 444, y: UI_H - 54, w: 198, h: 36 }, input.mouseX, input.mouseY)) {
+        if (rectContains(HUD_BTN_HELP_RECT, input.mouseX, input.mouseY)) {
           howToPlayReturnTo = "Playing"; audio.playShopOpen(); screen = "HowToPlay"; return;
         }
-      }
-      if (touchState.enabled && input.mouseClicked) {
-        if (rectContains({ x: UI_W - 332, y: 18, w: 312, h: 82 }, input.mouseX, input.mouseY)) {
-          shopIdx = 0; shopFlashTimer = 0; audio.playShopOpen(); screen = "Shop"; return;
-        }
-        if (rectContains({ x: 444, y: UI_H - 54, w: 198, h: 36 }, input.mouseX, input.mouseY)) {
-          howToPlayReturnTo = "Playing"; audio.playShopOpen(); screen = "HowToPlay"; return;
-        }
-        if (rectContains({ x: 20, y: 18, w: 386, h: 96 }, input.mouseX, input.mouseY)) {
+        if (rectContains(HUD_TOP_PAUSE_RECT, input.mouseX, input.mouseY) || rectContains(HUD_BTN_PAUSE_RECT, input.mouseX, input.mouseY)) {
           pauseIdx = 0; audio.playMenuMove(); screen = "Paused"; return;
+        }
+        if (rectContains(HUD_BTN_RESET_RECT, input.mouseX, input.mouseY)) {
+          audio.playMenuMove(); resetRun(true); return;
         }
       }
 
@@ -1297,7 +1301,7 @@
           if (input.mouseClicked) { victoryIdx = i; clickedBtn = true; }
         }
       }
-      if (input.backPressed || input.pausePressed || input.mPressed || ((input.confirmPressed || clickedBtn) && victoryIdx === 1)) {
+      if (input.backPressed || input.pausePressed || input.mPressed || input.bPressed || ((input.confirmPressed || clickedBtn) && victoryIdx === 1)) {
         audio.playMenuMove();
         resetRun(false);
       } else if (input.restartPressed || ((input.confirmPressed || clickedBtn) && victoryIdx === 0)) {
@@ -1531,21 +1535,39 @@
     drawText(ctx, `BEST ${best}`, 36, 62, "#ffde60", 2);
     drawText(ctx, `${zoneName(p)} (${pct}%)`, 36, 88, "#8ee0fa", 2);
 
+    // Clickable Pause badge inside top-left HUD box
+    drawBox(ctx, HUD_TOP_PAUSE_RECT.x, HUD_TOP_PAUSE_RECT.y, HUD_TOP_PAUSE_RECT.w, HUD_TOP_PAUSE_RECT.h,
+      "rgba(26,34,54,0.92)", "#88a8dc", 2);
+    drawCenteredText(ctx, "[P] PAUSE", HUD_TOP_PAUSE_RECT.x + HUD_TOP_PAUSE_RECT.w / 2, HUD_TOP_PAUSE_RECT.y + 7, "#dce8fa", 2);
+
     const anyAff = stats.canAfford(0) || stats.canAfford(1) || stats.canAfford(2);
     const sBorder = anyAff ? (Math.sin(elapsedVisual * 7) > 0 ? "#ffffff" : "#f8c444") : "#5c769e";
-    drawBox(ctx, UI_W - 332, 18, 312, 82, "rgba(14,16,28,0.78)", sBorder, 2);
+    drawBox(ctx, HUD_TOP_SHOP_RECT.x, HUD_TOP_SHOP_RECT.y, HUD_TOP_SHOP_RECT.w, HUD_TOP_SHOP_RECT.h, "rgba(14,16,28,0.78)", sBorder, 2);
     drawText(ctx, `COINS: ${stats.coins}`, UI_W - 314, 30, "#ffe262", 3);
-    drawDeckBadge(ctx, "Y", UI_W - 314, 62, "#fcce48", 2);
-    drawText(ctx, anyAff ? "SHOP UPGRADE READY!" : "OPEN SHOP (TAB)", UI_W - 274, 66, anyAff ? "#92faa2" : "#c4d4e8", 2);
+    drawDeckBadge(ctx, "E/B", UI_W - 314, 62, "#fcce48", 2);
+    drawText(ctx, anyAff ? "UPGRADE READY!" : "OPEN SHOP (Y)", UI_W - 244, 66, anyAff ? "#92faa2" : "#c4d4e8", 2);
 
-    drawBox(ctx, 20, UI_H - 54, 412, 36, "rgba(14,16,28,0.75)", "#46587c", 2);
-    drawText(ctx, `SPD ${stats.levels[0]}/5`, 34, UI_H - 43, "#ffba4a", 2);
-    drawText(ctx, `HGT ${stats.levels[1]}/5`, 168, UI_H - 43, "#6ce88a", 2);
-    drawText(ctx, `DUR ${stats.levels[2]}/5`, 302, UI_H - 43, "#62e0ff", 2);
+    // Bottom-Left Mini Stat Readout
+    drawBox(ctx, 20, UI_H - 54, 354, 38, "rgba(14,16,28,0.80)", "#46587c", 2);
+    drawText(ctx, `SPD ${stats.levels[0]}/5`, 32, UI_H - 42, "#ffba4a", 2);
+    drawText(ctx, `HGT ${stats.levels[1]}/5`, 146, UI_H - 42, "#6ce88a", 2);
+    drawText(ctx, `DUR ${stats.levels[2]}/5`, 260, UI_H - 42, "#62e0ff", 2);
 
-    drawBox(ctx, 444, UI_H - 54, 198, 36, "rgba(14,16,28,0.75)", "#46587c", 2);
-    drawDeckBadge(ctx, "X", 454, UI_H - 47, "#6cc6ff", 2);
-    drawText(ctx, "HOW TO PLAY", 494, UI_H - 43, "#cee0f6", 2);
+    // Bottom On-Screen Controls Bar + Clickable Action Buttons
+    drawBox(ctx, 384, UI_H - 54, 854, 38, "rgba(14,16,28,0.82)", "#46587c", 2);
+    drawText(ctx, "A/D:MOVE", 398, UI_H - 42, "#accef4", 2);
+    drawText(ctx, "SPC/J:JUMP", 512, UI_H - 42, "#60e080", 2);
+    drawText(ctx, "S:DROP", 652, UI_H - 42, "#96d8ff", 2);
+
+    const drawActionBtn = (r, label, borderCol, textCol) => {
+      const hovered = rectContains(r, input.mouseX, input.mouseY);
+      drawBox(ctx, r.x, r.y, r.w, r.h, hovered ? "#263a5a" : "#182034", hovered ? "#ffffff" : borderCol, 2);
+      drawCenteredText(ctx, label, r.x + r.w / 2, r.y + 8, textCol, 2);
+    };
+    drawActionBtn(HUD_BTN_SHOP_RECT, "E/B:SHOP", "#fcce48", "#ffe488");
+    drawActionBtn(HUD_BTN_HELP_RECT, "H:HELP", "#6cc6ff", "#bfe4ff");
+    drawActionBtn(HUD_BTN_PAUSE_RECT, "P:PAUSE", "#c4b0f8", "#e2d8ff");
+    drawActionBtn(HUD_BTN_RESET_RECT, "R:RESET", "#ff9c88", "#ffd0c4");
 
     // Right altitude gauge
     const bx = UI_W - 30, by = 128, bw = 12, bh = UI_H - 180;
@@ -1595,12 +1617,12 @@
     }
 
     const footY = by + boxH - 52;
-    let fx = bx + 90;
-    drawDeckBadge(ctx, "D-PAD", fx, footY, "#accef4", 2); fx += measureBadgeWidth("D-PAD", 2) + 8;
-    drawText(ctx, "Select", fx, footY + 4, "#ffffff", 2); fx += 116;
-    drawDeckBadge(ctx, "A", fx, footY, "#60e080", 2); fx += measureBadgeWidth("A", 2) + 8;
-    drawText(ctx, "Confirm", fx, footY + 4, "#ffffff", 2); fx += 130;
-    drawDeckBadge(ctx, "X", fx, footY, "#6cc6ff", 2); fx += measureBadgeWidth("X", 2) + 8;
+    let fx = bx + 68;
+    drawDeckBadge(ctx, "W/S", fx, footY, "#accef4", 2); fx += measureBadgeWidth("W/S", 2) + 8;
+    drawText(ctx, "Select", fx, footY + 4, "#ffffff", 2); fx += 108;
+    drawDeckBadge(ctx, "SPACE/A", fx, footY, "#60e080", 2); fx += measureBadgeWidth("SPACE/A", 2) + 8;
+    drawText(ctx, "Confirm", fx, footY + 4, "#ffffff", 2); fx += 116;
+    drawDeckBadge(ctx, "H/X", fx, footY, "#6cc6ff", 2); fx += measureBadgeWidth("H/X", 2) + 8;
     drawText(ctx, "How To Play", fx, footY + 4, "#ffffff", 2);
   }
 
@@ -1655,13 +1677,12 @@
 
     const footY = py + panelH - 54;
     let fx = px + 36;
-    drawDeckBadge(ctx, "D-PAD", fx, footY, "#b4cae8", 2); fx += measureBadgeWidth("D-PAD", 2) + 10;
-    drawText(ctx, "Select", fx, footY + 4, "#ffffff", 2); fx += 116;
-    drawDeckBadge(ctx, "A", fx, footY, "#60e080", 2); fx += measureBadgeWidth("A", 2) + 10;
-    drawText(ctx, "Buy Upgrade", fx, footY + 4, "#ffffff", 2); fx += 180;
-    drawDeckBadge(ctx, "Y", fx, footY, "#fcce48", 2); fx += measureBadgeWidth("Y", 2) + 8;
-    drawDeckBadge(ctx, "B", fx, footY, "#f26666", 2); fx += measureBadgeWidth("B", 2) + 10;
-    drawText(ctx, "Resume (Tab/Esc)", fx, footY + 4, "#ffffff", 2);
+    drawDeckBadge(ctx, "W/S", fx, footY, "#b4cae8", 2); fx += measureBadgeWidth("W/S", 2) + 10;
+    drawText(ctx, "Select", fx, footY + 4, "#ffffff", 2); fx += 104;
+    drawDeckBadge(ctx, "SPC/J/A", fx, footY, "#60e080", 2); fx += measureBadgeWidth("SPC/J/A", 2) + 10;
+    drawText(ctx, "Upgrade", fx, footY + 4, "#ffffff", 2); fx += 126;
+    drawDeckBadge(ctx, "E/B/Y", fx, footY, "#fcce48", 2); fx += measureBadgeWidth("E/B/Y", 2) + 10;
+    drawText(ctx, "Resume (Click)", fx, footY + 4, "#ffffff", 2);
   }
 
   function drawHowToPlay() {
@@ -1680,19 +1701,19 @@
     drawText(ctx, "Start deep underground in dark stone ruins, climb through the forest canopy,\nand reach the Sky Escape Gate at the top in your fastest time!", px + 48, py + 124, "#d0e0f4", 2);
 
     drawBox(ctx, px + 34, py + 188, panelW - 68, 224, "rgba(22,28,50,0.92)", "#4c6694", 2);
-    drawText(ctx, "STEAM DECK & KEYBOARD CONTROLS", px + 48, py + 202, "#8eeab4", 2);
+    drawText(ctx, "WEB KEYBOARD & GAMEPAD CONTROLS", px + 48, py + 202, "#8eeab4", 2);
     const lines = [
-      ["L-STICK / D-PAD", "Move Left & Right (Up does not jump)", "A / D / ARROWS", "#accef4"],
-      ["A BUTTON", "Jump (Hold for lift; Down+A drops)", "SPACE / Z", "#60e080"],
-      ["Y BUTTON", "Open/Close Shop (Timer Paused)", "TAB / E", "#fcce48"],
-      ["X BUTTON", "How To Play (Timer Paused)", "H / F1", "#6cc6ff"],
-      ["MENU / VIEW", "Pause Menu  /  Quick Restart Run", "ESC / R", "#c4b0f8"],
+      ["A/D / ARROWS", "Move Left & Right (Up does not jump)", "L-STICK/DPAD", "#accef4"],
+      ["SPACE / J", "Jump (Hold for lift; S/Down+Jump drops)", "A BUTTON", "#60e080"],
+      ["E / B", "Open/Close Shop (Timer Paused)", "Y BUTTON", "#fcce48"],
+      ["H", "How To Play (Timer Paused)", "X BUTTON", "#6cc6ff"],
+      ["P / R", "Pause Menu  /  Quick Restart Run", "MENU / VIEW", "#c4b0f8"],
     ];
-    lines.forEach(([b, d, k, c], idx) => {
+    lines.forEach(([k, d, b, c], idx) => {
       const y = py + 234 + idx * 34;
-      drawDeckBadge(ctx, b, px + 48, y, c, 2);
-      drawText(ctx, d, px + 48 + 208, y + 4, "#ffffff", 2);
-      drawText(ctx, `(${k})`, px + 48 + 688, y + 4, "#94a8c2", 2);
+      drawDeckBadge(ctx, k, px + 48, y, c, 2);
+      drawText(ctx, d, px + 48 + 194, y + 4, "#ffffff", 2);
+      drawText(ctx, `(${b})`, px + 48 + 706, y + 4, "#94a8c2", 2);
     });
 
     drawBox(ctx, px + 34, py + 426, panelW - 68, 144, "rgba(22,28,50,0.92)", "#4c6694", 2);
@@ -1703,10 +1724,10 @@
 
     const footY = py + panelH - 54;
     let fx = px + 34;
-    drawDeckBadge(ctx, "A", fx, footY, "#60e080", 2); fx += measureBadgeWidth("A", 2) + 8;
-    drawDeckBadge(ctx, "B", fx, footY, "#f26666", 2); fx += measureBadgeWidth("B", 2) + 8;
-    drawDeckBadge(ctx, "X", fx, footY, "#6cc6ff", 2); fx += measureBadgeWidth("X", 2) + 12;
-    drawText(ctx, "Close & Return (H / Esc / Enter)", fx, footY + 4, "#ffffff", 2);
+    drawDeckBadge(ctx, "H", fx, footY, "#6cc6ff", 2); fx += measureBadgeWidth("H", 2) + 8;
+    drawDeckBadge(ctx, "SPACE", fx, footY, "#60e080", 2); fx += measureBadgeWidth("SPACE", 2) + 8;
+    drawDeckBadge(ctx, "BACKSPACE", fx, footY, "#f26666", 2); fx += measureBadgeWidth("BACKSPACE", 2) + 12;
+    drawText(ctx, "Close & Return (Click / A / B / X)", fx, footY + 4, "#ffffff", 2);
   }
 
   function drawPaused() {
@@ -1728,7 +1749,7 @@
       if (sel) drawBox(ctx, r.x, r.y, r.w, r.h, "#26365c", "#7adcff", 2);
       drawCenteredText(ctx, items[i], UI_W / 2, r.y + 10, sel ? "#94eeff" : "#ffffff", 2);
     }
-    drawCenteredText(ctx, "[A] SELECT   |   [B / ESC] RESUME", UI_W / 2, by + boxH - 34, "#a8bcd6", 2);
+    drawCenteredText(ctx, "[ENTER / A] SELECT   |   [P / B] RESUME", UI_W / 2, by + boxH - 34, "#a8bcd6", 2);
   }
 
   function drawVictory() {
@@ -1748,13 +1769,13 @@
     drawCenteredText(ctx, `UPGRADES PURCHASED: ${stats.upgradesPurchased}`, UI_W / 2, by + 286, "#b8e0f8", 2);
     drawCenteredText(ctx, `SPEED ${stats.levels[0]}/5   |   HEIGHT ${stats.levels[1]}/5   |   DURATION ${stats.levels[2]}/5`, UI_W / 2, by + 318, "#8ef0b4", 2);
 
-    const btns = ["RUN AGAIN [A]", "MAIN MENU [B]"];
+    const btns = ["RUN AGAIN [R/A]", "MAIN MENU [M/B]"];
     for (let i = 0; i < 2; i++) {
       const sel = i === victoryIdx, r = getVictoryBtnRect(i);
       drawBox(ctx, r.x, r.y, r.w, r.h, sel ? "#24483e" : "#182236", sel ? "#76f69c" : "#5c7aa0", sel ? 3 : 2);
       drawCenteredText(ctx, btns[i], r.x + r.w / 2, r.y + 20, "#ffffff", 2);
     }
-    drawCenteredText(ctx, "[D-PAD / CLICK] CHOOSE  |  [A] CONFIRM  |  [B] MAIN MENU", UI_W / 2, by + boxH - 34, "#a8c6e0", 2);
+    drawCenteredText(ctx, "[D-PAD / CLICK] CHOOSE  |  [ENTER/A] CONFIRM  |  [M/B] MENU", UI_W / 2, by + boxH - 34, "#a8c6e0", 2);
   }
 
   function render() {

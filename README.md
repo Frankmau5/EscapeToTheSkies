@@ -29,16 +29,16 @@ A Steam Deck-tailored vertical speedrun platformer built with **XNA / FNA** (`.N
 
 ## Steam Deck & Keyboard Controls
 
-| Action | Steam Deck (Gamepad) | Keyboard |
-| :--- | :--- | :--- |
-| **Move / Menu Navigate** | Left Stick or D-Pad | `A` / `D` / Arrows (`W`/`S` in menus) |
-| **Jump / Hold Lift / Confirm** | `A` Button | `Space` / `Z` / `K` *(Up does NOT jump)* |
-| **Drop Through Thin Ledge** | `Down + A` | `S / Down + Space` |
-| **Open / Close Shop *(Timer Paused)*** | `Y` Button | `Tab` / `E` / `I` |
-| **How To Play *(Timer Paused)*** | `X` Button | `H` / `F1` |
-| **Pause Menu** | `Menu` (`Start`) | `Esc` / `P` |
-| **Quick Restart Run** | `View` (`Back`) | `R` |
-| **Toggle Fullscreen** | Main/Pause Menu | `F11` / `Alt+Enter` |
+| Action | Steam Deck (Gamepad) | Native Keyboard | HTML5 Web Keyboard |
+| :--- | :--- | :--- | :--- |
+| **Move / Menu Navigate** | Left Stick or D-Pad | `A` / `D` / Arrows (`W`/`S` in menus) | `A` / `D` / Arrows (`W`/`S` in menus) |
+| **Jump / Hold Lift / Confirm** | `A` Button | `Space` / `Z` / `K` *(Up does NOT jump)* | `Space` / `J` *(Up does NOT jump)* |
+| **Drop Through Thin Ledge** | `Down + A` | `S / Down + Space` | `S / Down + Space / J` |
+| **Open / Close Shop *(Timer Paused)*** | `Y` Button | `Tab` / `E` / `I` | `E` / `B` *(or click HUD)* |
+| **How To Play *(Timer Paused)*** | `X` Button | `H` / `F1` | `H` *(or click HUD)* |
+| **Pause Menu** | `Menu` (`Start`) | `Esc` / `P` | `P` *(avoids exiting fullscreen)* |
+| **Quick Restart Run** | `View` (`Back`) | `R` | `R` *(or click HUD)* |
+| **Toggle Fullscreen** | Main/Pause Menu | `F11` / `Alt+Enter` | `F11` / Menu |
 
 ## HTML5 / itch.io Build (`web-itch/`)
 
